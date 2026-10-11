@@ -216,8 +216,7 @@ See [Examples](examples.md) for the resulting trace.
 Aspects are plain objects; the library never instantiates them itself.
 `AspectInstanceResolverInterface::get(string $aspectClass, ?object $scope = null): object` supplies them.
 
-- With the bundle, `ContainerAspectInstanceResolver` pulls the aspect from a service locator on first use.
-  Aspects stay private services, may depend on anything, and a cycle between an aspect and a service it advises is fine because the aspect is resolved only when the first advised call happens.
+- The Symfony bundle pulls aspects from the container; see [Aspect instances](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#aspect-instances).
 - With `ProxyFactory::fromAspects()`, `ArrayAspectInstanceResolver` holds the instances you pass.
   It also accepts closures that create the aspect lazily.
 
@@ -266,7 +265,7 @@ Introductions declared with `#[DeclareParents]` are not affected by the scope.
 
 ## Validation summary
 
-All of these fail at weave time (container build with the bundle, `ProxyFactory` construction standalone) with `AspectDefinitionException` or `BindingException`:
+All of these fail at weave time (container build in the Symfony bundle, `ProxyFactory` construction standalone) with `AspectDefinitionException` or `BindingException`:
 
 - A class without `#[Aspect]` used as an aspect.
 - A method with more than one advice or pointcut attribute.

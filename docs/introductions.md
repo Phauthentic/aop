@@ -128,11 +128,7 @@ Introduced methods are join points like target methods, so advice applies to the
 
 ## Symfony
 
-The bundle applies introductions while weaving (`ProxyWeavingPass`), records them per service in the weaving report and lists them in the "Introduced interfaces" section of `bin/console debug:aop` (see [Symfony bundle](symfony.md#debugaop)).
-
-The woven service implements the introduced interface, but the bundle registers no autowiring alias for it.
-A constructor parameter typed with the introduced interface is therefore not autowired.
-Inject the service by its id or its own type and check `instanceof`, or add an alias yourself, for example `App\Contract\Auditable: '@App\Service\OrderService'`.
+How the Symfony bundle applies introductions, lists them in `debug:aop` and handles autowiring is described in the [bundle documentation](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#introductions).
 
 ## Standalone
 
@@ -143,8 +139,7 @@ To build the registry by hand, pass the result of `AdvisorFactory::introductions
 
 - The default implementation is created without constructor arguments; it cannot receive services.
   Give it setters and call them from advice if it needs collaborators.
-- On PHP 8.3 or Symfony 7.2, a lazy service woven with the subclass strategy is wrapped in a Symfony lazy proxy of the target class, which does not implement the introduced interface; the inner instance does.
-  With native lazy objects (PHP 8.4 and Symfony 7.3 or newer) the lazy service is the proxy itself and implements the interface.
+- Lazy services in the Symfony bundle may not implement the introduced interface on every stack; see [Lazy services](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#lazy-services).
 - `clone` and `unserialize()` give the copy a new, empty default implementation instance on first use.
   A wither on an interface-proxied target returns a new proxy with its own default implementation instance.
 - When two introduced interfaces declare a method of the same name, the first interface in name order provides the implementation.

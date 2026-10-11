@@ -181,4 +181,4 @@ Building the `AdvisorRegistry` by hand means reading metadata with `AspectMetada
 
 Implement `Aspect\AspectInstanceResolverInterface` to fetch aspects from your container, build an `AdvisorRegistry` as above, and construct `ProxyFactory` with both.
 Then, wherever your container instantiates a service, call `createProxyClass()` (subclass) or `createProxy()` (interface) with the service id as bean name.
-`src/Compiler/ProxyWeavingPass.php` in the `Phauthentic/symfony-aop` repository is the reference implementation of this for Symfony.
+[`src/Compiler/ProxyWeavingPass.php`](https://github.com/Phauthentic/aop-symfony/blob/main/src/Compiler/ProxyWeavingPass.php) in the `Phauthentic/aop-symfony` repository is the reference implementation of this for Symfony.

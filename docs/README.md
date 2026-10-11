@@ -1,7 +1,7 @@
 # Documentation
 
-Developer documentation for `phauthentic/aop` (the framework-free core, namespace `Phauthentic\AOP\`, this repository) and `phauthentic/symfony-aop` (the Symfony integration, namespace `Phauthentic\AOP\Symfony\`, repository [Phauthentic/symfony-aop](https://github.com/Phauthentic/symfony-aop)).
-The documentation for both packages lives here.
+Developer documentation for `phauthentic/aop`, the framework-free core (namespace `Phauthentic\AOP\`).
+The Symfony integration, `phauthentic/symfony-aop`, is documented in its own repository, [Phauthentic/aop-symfony](https://github.com/Phauthentic/aop-symfony/blob/main/docs/README.md).
 A complete runnable demo application lives in [Phauthentic/aop-symfony-example](https://github.com/Phauthentic/aop-symfony-example).
 
 ## Reading order
@@ -16,17 +16,18 @@ Jump straight to a page if you know what you are looking for.
 | 3 | [Advice](advice.md) | You write an aspect and need the five advice types, parameter binding, and execution order. |
 | 4 | [Proxies](proxies.md) | You wonder why a method is not advised, which strategy a class gets, or what the generated code looks like. |
 | 5 | [Introductions](introductions.md) | You want advised objects to implement an extra interface through `#[DeclareParents]`. |
-| 6 | [Symfony bundle](symfony.md) | You install, configure, or troubleshoot the bundle, or want to know how weaving fits into the container build. |
-| 7 | [Standalone usage](standalone.md) | You use the core without Symfony through `ProxyFactory`. |
-| 8 | [Examples](examples.md) | You want complete, copy-pasteable aspects: logging, validation, retry, caching, interface-proxied final class. |
-| 9 | [Architecture](architecture.md) | You contribute to the library and need the package layout, class responsibilities, extension points, and the test setup. |
+| 6 | [Standalone usage](standalone.md) | You use the core without a framework through `ProxyFactory`. |
+| 7 | [Examples](examples.md) | You want complete, copy-pasteable aspects: logging, validation, retry, caching, interface-proxied final class. |
+| 8 | [Architecture](architecture.md) | You contribute to the library and need the package layout, class responsibilities, extension points, and the test setup. |
+
+## Symfony
+
+Installation, configuration, compile-time weaving, `debug:aop` and troubleshooting for the Symfony bundle are in the [bundle documentation](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md).
 
 ## Quick commands
 
 ```bash
-bin/console app:aop-demo   # in the demo application: runs the demo scenarios and prints the advice trace
-bin/console debug:aop      # in a Symfony application with the bundle: lists advised services, methods, advisors, introduced interfaces and skipped services
-composer check             # in each package repository: php-cs-fixer, phpstan (level max), phpunit with a coverage gate
+composer check   # php-cs-fixer, phpstan (level max), phpunit with a coverage gate
 ```
 
 ## Conventions in these pages

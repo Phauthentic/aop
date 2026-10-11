@@ -4,9 +4,9 @@ Aspect-oriented programming for PHP 8.3+.
 Pointcut expressions, advice types and ordering follow Spring AOP, adapted to PHP.
 
 This repository is `phauthentic/aop`, the framework-free core: pointcut language, advice, proxy generation.
-It also holds the documentation for both packages.
+The language-level documentation is in [docs/](docs/README.md).
 
-- [Phauthentic/symfony-aop](https://github.com/Phauthentic/symfony-aop) is the Symfony bundle: aspect discovery, compile-time weaving, `debug:aop`.
+- [Phauthentic/aop-symfony](https://github.com/Phauthentic/aop-symfony) is the Symfony bundle: aspect discovery, compile-time weaving, `debug:aop`.
 - [Phauthentic/aop-symfony-example](https://github.com/Phauthentic/aop-symfony-example) is a runnable demo application.
 
 ## Install
@@ -17,48 +17,9 @@ Requires PHP 8.3 or later.
 composer require phauthentic/aop
 ```
 
-The bundle additionally requires Symfony 7.2 components and Composer 2.
-The packages are not on Packagist yet, so install the bundle through its VCS repository:
+## Symfony
 
-```bash
-composer config repositories.aop vcs git@github.com:Phauthentic/aop.git
-composer config repositories.symfony-aop vcs git@github.com:Phauthentic/symfony-aop.git
-composer require phauthentic/aop:dev-main phauthentic/symfony-aop:dev-main
-```
-
-Register `Phauthentic\AOP\Symfony\PhauthenticAopBundle` in `config/bundles.php` and add `config/packages/phauthentic_aop.yaml`:
-
-```yaml
-phauthentic_aop:
-    include: ['App\**']
-    # strip_final: false   # opt-in and risky: subclass proxies for final classes, see docs/symfony.md
-```
-
-## Quick start with Symfony
-
-```php
-use Phauthentic\AOP\Attribute\{Aspect, Before};
-use Phauthentic\AOP\JoinPoint\JoinPointInterface;
-
-#[Aspect]
-final class LoggingAspect
-{
-    public function __construct(private readonly LoggerInterface $logger) {}
-
-    #[Before('execution(* App\Service\**::*(..))')]
-    public function before(JoinPointInterface $jp): void
-    {
-        $this->logger->info('calling '.$jp->toShortString());
-    }
-}
-```
-
-Services in `App\Service` are now woven.
-No further configuration is needed.
-
-```bash
-bin/console debug:aop      # what is advised, and by whom
-```
+The Symfony bundle lives in [Phauthentic/aop-symfony](https://github.com/Phauthentic/aop-symfony) and has its own [documentation](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md): installation, configuration, compile-time weaving and `debug:aop`.
 
 ## Quick start without a framework
 
@@ -123,12 +84,12 @@ See [Standalone usage](docs/standalone.md) for the interface strategy, caching a
   Inject the interface.
   Self-invocation is not advised.
 
-Both are written to the kernel build directory (`var/cache/<env>/phauthentic_aop/` by default) and never touch your `src/` directory.
+Generated classes are written to a cache directory, the kernel build directory when you use the Symfony bundle, and never touch your `src/` directory.
 
 ## Limitations
 
 - Only method execution is a join point.
-- Interface proxies skip self-invocation; use `AopContext::currentProxy()`, the Symfony bundle's `debug:aop` lists the affected calls.
+- Interface proxies skip self-invocation; use `AopContext::currentProxy()`, the Symfony bundle's [`debug:aop`](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#debugaop) lists the affected calls.
 - Methods returning by reference are not advised; methods with by-reference parameters are.
 - Private, static, final (subclass strategy) and magic methods are not advised.
 
@@ -141,8 +102,8 @@ Start at the [documentation index](docs/README.md).
 - [Advice](docs/advice.md): the five advice types, parameters, ordering
 - [Proxies](docs/proxies.md): strategies, eligibility, generated code, limitations
 - [Introductions](docs/introductions.md): `#[DeclareParents]`, introduced interfaces and their default implementations
-- [Symfony bundle](docs/symfony.md): installation, configuration, weaving, `debug:aop`, troubleshooting
-- [Standalone usage](docs/standalone.md): `ProxyFactory` without Symfony
+- [Symfony bundle](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md): installation, configuration, weaving, `debug:aop`, troubleshooting (bundle repository)
+- [Standalone usage](docs/standalone.md): `ProxyFactory` without a framework
 - [Examples](docs/examples.md): logging, validation, retry, caching, interface-proxied final class
 - [Architecture](docs/architecture.md): package layout, extension points, tests
 

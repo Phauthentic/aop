@@ -23,7 +23,7 @@ The service classes stay unaware of it.
 | Interceptor | The runtime wrapper for one advisor on one method. Each advice type has its own interceptor class. | `Interceptor\*` |
 | Proxy | A generated class that stands in for the target and routes advised methods through the runtime. Two strategies: subclass (like CGLIB) and interface (like a JDK dynamic proxy). | `Proxy\*` |
 | Target | The object whose method is advised. With a subclass proxy the proxy is the target. With an interface proxy the proxy wraps a separate target instance. | `JoinPointInterface::getTarget()` |
-| Weaving | Deciding, per class and method, which advisors apply, then generating and installing the proxy. Happens at container build time in Symfony or on first use with `ProxyFactory`. | `Symfony\Compiler\ProxyWeavingPass`, `Proxy\ProxyFactory` |
+| Weaving | Deciding, per class and method, which advisors apply, then generating and installing the proxy. Happens at container build time in the Symfony bundle or on first use with `ProxyFactory`. | `Proxy\ProxyFactory`, `Symfony\Compiler\ProxyWeavingPass` (bundle) |
 | Runtime | The object proxies call into. Builds and caches the interceptor chain per proxy class and method. | `Runtime\AopRuntime` |
 | Binding | Passing a value selected by the pointcut (an argument, the target, an attribute instance) into a named advice parameter. | `Binding\ParameterBinder`, `Binding\BindingPlan` |
 
@@ -39,7 +39,7 @@ The service classes stay unaware of it.
 | `@AfterThrowing(throwing = "e")` | `#[AfterThrowing('...', throwing: 'e')]` | The parameter type filters which exceptions trigger the advice. |
 | `JoinPoint`, `ProceedingJoinPoint` | `JoinPointInterface`, `ProceedingJoinPointInterface` | Injected by parameter type, any position. |
 | `execution(* com.x..*.*(..))` | `execution(* Com\X\**::*(..))` | `\` separates namespaces, `::` separates type and method, `**` matches any number of segments. |
-| `within`, `this`, `target`, `args`, `bean` | Same names | `bean()` matches the Symfony service id or the name you pass to `ProxyFactory`. |
+| `within`, `this`, `target`, `args`, `bean` | Same names | `bean()` matches the name you pass to `ProxyFactory`, or the service id in the [Symfony bundle](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#the-bean-designator). |
 | `@annotation`, `@within`, `@target`, `@args` | Same names | Match PHP attributes instead of Java annotations. |
 | `argNames` | Not needed | PHP reflection knows parameter names. |
 | JDK dynamic proxy | Interface proxy | For final classes that implement an interface. |
@@ -102,33 +102,7 @@ The registry is sorted once, so the chain order is the advisor order described i
 
 ## Flow 2: compile-time weaving in Symfony
 
-Diagram: container build with `phauthentic/symfony-aop`.
-
-```mermaid
-flowchart TD
-    A["#[Aspect] classes\n(autoconfigured, tagged phauthentic_aop.aspect)"] --> B[AspectCollectorPass]
-    B -->|reads attributes, validates pointcuts and bindings| C["advisor_registry definition\n(aspect class names only)"]
-    B --> D["aspect_resolver\n(service locator keyed by aspect class)"]
-    C --> E[ProxyWeavingPass]
-    F["Service definitions matching include/exclude"] --> E
-    E -->|"MethodEligibility + matchedAdvisors()"| G{any advised method?}
-    G -->|no| H[leave definition alone]
-    G -->|yes, strategy resolved| I["SubclassProxyGenerator or InterfaceProxyGenerator"]
-    G -->|yes, no strategy| J["weaving report: skipped + reason"]
-    I --> K["ProxyClassWriter writes\n%kernel.build_dir%/phauthentic_aop/..."]
-    K --> L["definition class swapped (subclass)\nor decorated by hand (interface)"]
-    L --> M["__aopSetRuntime(runtime) method call\nregisterBeanName(proxy class, service id)"]
-    M --> N["weaving report → debug:aop"]
-```
-
-Two compiler passes do the work, both registered at `PassConfig::TYPE_BEFORE_REMOVING` so autowiring and decoration have already run.
-
-1. `AspectCollectorPass` collects tagged aspect services, calls `AdvisorRegistryFactory::create()` once to fail the build early on invalid expressions or bindings, and stores only the aspect class names in the registry definition.
-   The registry is rebuilt from those names at runtime, so no compiled pointcut is ever serialised into the container.
-2. `ProxyWeavingPass` walks every non-abstract, non-synthetic definition whose class matches `include` and not `exclude`, statically matches each eligible method against all advisors, generates a proxy for every class with at least one hit, writes it into the proxy directory and rewires the definition.
-   Everything it did or skipped ends up in the `phauthentic_aop.weaving_report` parameter, which `debug:aop` prints.
-
-Details and edge cases are in [Symfony bundle](symfony.md#how-weaving-works).
+The Symfony bundle weaves proxies in two compiler passes at container build time; the flowchart and the step-by-step algorithm are in the [bundle documentation](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#how-weaving-works).
 
 ## Static versus runtime matching
 
@@ -141,4 +115,4 @@ A pointcut has two halves.
 
 A static mismatch means the advisor is not in the chain at all.
 A runtime mismatch means the advisor is in the chain but `RuntimeGuardInterceptor` skips it for that call.
-`debug:aop` lists an advisor as soon as its static half matches, so an `args(...)` advice can appear there and still not run for a particular argument.
+The bundle's `debug:aop` lists an advisor as soon as its static half matches, so an `args(...)` advice can appear there and still not run for a particular argument.

@@ -109,7 +109,8 @@ Variadic parameters arrive with their original keys, so named variadic arguments
 `bean(App\Service\StringService)` matches the service whose id is that class name (the default for autowired services).
 `bean(app.*_service)` uses `*` as a glob over the id.
 Dots, dashes and backslashes are allowed inside `bean()` and nothing else is parsed there.
-Outside Symfony the bean name is the one passed to `ProxyFactory::createProxyClass()` or `createProxy()`; without one, `bean()` never matches.
+The bean name is the one passed to `ProxyFactory::createProxyClass()` or `createProxy()`; without one, `bean()` never matches.
+The Symfony bundle fills it with the service id, see [The bean() designator](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#the-bean-designator).
 
 ### @annotation, @within, @target, @args
 
@@ -186,7 +187,7 @@ final class LoggingAspect
 
 Named pointcuts can reference other named pointcuts.
 A cycle (`a() -> b() -> a()`) raises `PointcutSyntaxException` with the chain in the message.
-The referenced class must be an `#[Aspect]`; with the bundle it does not need to be a registered service, the resolver reflects it on demand.
+The referenced class must be an `#[Aspect]`.
 
 ## Binding
 
@@ -221,7 +222,7 @@ Rules enforced at compile time, each raising `BindingException`:
 | `BindingException` | A binding rule above is violated, or an advice parameter cannot be bound. |
 
 All three extend `AopException`.
-With the bundle they are wrapped in an `AspectDefinitionException` whose message names the aspect class and method: `Invalid advice App\Aspect\X::y(): ...`.
+In the Symfony bundle they are wrapped in an `AspectDefinitionException` that names the aspect class and method (see [Aspect instances](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#aspect-instances)).
 
 ## Examples
 
@@ -245,4 +246,4 @@ Private, static, abstract and magic methods (`__*`), constructors and destructor
 Under the subclass strategy, final methods are also skipped.
 Under the interface strategy, only public methods declared by an interface of the target are advised.
 Enums, internal classes, abstract classes, anonymous classes, interfaces and traits are never proxied.
-`bin/console debug:aop` (from the Symfony bundle) reports skipped services with the reason; see [Proxies](proxies.md#eligibility) for the full list.
+The Symfony bundle reports skipped services with the reason in [`debug:aop`](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#debugaop); see [Proxies](proxies.md#eligibility) for the full list.

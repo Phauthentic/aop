@@ -11,13 +11,13 @@ This page covers the two strategies, how one is chosen, which classes and method
 |---|---|---|
 | Spring equivalent | CGLIB proxy | JDK dynamic proxy |
 | Generated class | `extends Target`, overrides the advised methods only | `implements` every interface of the target, delegates every interface method to a wrapped instance |
-| Works for | Non-final classes (final ones with the bundle's opt-in `strip_final`) | Any class that implements at least one interface, including final ones |
+| Works for | Non-final classes | Any class that implements at least one interface, including final ones |
 | Inject as | The class or any interface | The interface only; the proxy is **not** an instance of the target class |
 | `$this` inside the target | The proxy, so self-invocation is advised | The target, so self-invocation is not advised |
 | `getThis()` / `getTarget()` | Both the proxy | The proxy / the wrapped instance |
 | Constructor | Runs once, untouched, when the proxy is constructed | Untouched; the proxy's own constructor takes the target instance |
 | Protected methods | Advised | Never (not declared by an interface) |
-| Final methods | Skipped (advised with the bundle's opt-in `strip_final`) | Advised if an interface declares them |
+| Final methods | Skipped | Advised if an interface declares them |
 | Non-interface public methods | Still callable | Do not exist on the proxy |
 | Target returns `$this` | The proxy (it is `$this`) | The proxy, via `__aopWrap()` |
 | Target returns another instance of its class | That instance, advised only if it is itself a proxy | A new proxy around it wired to the same runtime, via `__aopWrap()` |
@@ -26,8 +26,7 @@ This page covers the two strategies, how one is chosen, which classes and method
 
 Introduced interfaces come from `#[DeclareParents]`; see [Introductions](introductions.md).
 
-The Symfony bundle can subclass final classes when `strip_final` is enabled: it loads a copy of the class file without `final` (`Proxy\FinalStripper`) and passes `allowFinal: true` to `ProxyStrategyResolver::resolve()` and `MethodEligibility::reasonForExclusion()`.
-It is off by default and risky; see [strip_final](symfony.md#strip_final-opt-in-risky).
+The Symfony bundle can subclass final classes and advise final methods through an opt-in, risky option; see [strip_final](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#strip_final-opt-in-risky).
 
 ## Auto-selection
 
@@ -39,7 +38,7 @@ It is off by default and risky; see [strip_final](symfony.md#strip_final-opt-in-
 
 An explicit choice that cannot apply raises `ProxyGenerationException`:
 `SUBCLASS` on a final class, or `INTERFACE` on a class without interfaces.
-The bundle catches this and lists the service under "Skipped services" with the message; `ProxyFactory` lets it propagate.
+`ProxyFactory` lets it propagate; the Symfony bundle reports it as a skipped service instead (see [debug:aop](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#debugaop)).
 
 ```php
 use Phauthentic\AOP\Attribute\Proxyable;
@@ -49,11 +48,11 @@ use Phauthentic\AOP\Proxy\ProxyStrategy;
 class PreferInterfaceProxy implements SomeInterface { /* ... */ }
 ```
 
-The bundle adds two more rules on top, described in [Symfony bundle](symfony.md#strategy-rules-specific-to-the-container): services created by a factory or with a `file` fall back to the interface strategy, and tagged services whose public methods an interface proxy would hide are skipped.
+The Symfony bundle adds rules for container-managed services, described in [Strategy rules specific to the container](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#strategy-rules-specific-to-the-container).
 
 ## Eligibility
 
-`Proxy\MethodEligibility` returns a human-readable reason for every exclusion; `debug:aop` prints it.
+`Proxy\MethodEligibility` returns a human-readable reason for every exclusion; the Symfony bundle prints it in [`debug:aop`](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#debugaop).
 
 ### Classes that are never proxied
 
@@ -87,7 +86,7 @@ A method that is eligible but matches no advisor is simply not overridden; the p
 ## Generated code
 
 Both generators share `Proxy\ProxyCodeBuilder`, which uses `nette/php-generator`.
-The proxy class name is `Phauthentic\AOP\Generated\<Target FQCN>Proxy_<12 hex>`, where the hash covers the target class, the strategy, the sorted advised method names and a salt (the service id plus the proxy directory in the bundle; the bean name in `ProxyFactory`).
+The proxy class name is `Phauthentic\AOP\Generated\<Target FQCN>Proxy_<12 hex>`, where the hash covers the target class, the strategy, the sorted advised method names and a salt (the bean name in `ProxyFactory`; the service id plus the proxy directory in the Symfony bundle).
 Two services of the same class therefore get two proxy classes, each registered with its own bean name.
 
 Every proxy implements `Proxy\AdvisedInterface`:
@@ -294,14 +293,14 @@ With the subclass strategy `$this` already is the proxy, so you do not need it t
 - Self-invocation with interface proxies is not advised.
   Inside the target `$this` is the plain object, so `$this->other()` bypasses the proxy.
   Call `AopContext::currentProxy()->other()` instead (see below), or use the subclass strategy (make the class non-final).
-  `bin/console debug:aop` lists the `$this->advisedMethod()` calls it finds in interface-proxied classes.
+  The Symfony bundle's [`debug:aop`](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#debugaop) lists the `$this->advisedMethod()` calls it finds in interface-proxied classes.
 - `new self` inside a subclass-proxied target creates a plain, unadvised target.
   `new static` creates another proxy instance, which is advised.
 - Methods returning by reference are never advised; by-reference parameters are advised.
   `getArgs()` and `args()` bindings hand advice the values, so changing them in advice does not reach the caller; `proceed($args)` does.
 - Private, static, final (subclass strategy) and magic methods are never advised.
 - A proxy cannot be unserialised in a process that has not loaded its class.
-  With the bundle the proxy autoloader is registered at boot, so `unserialize()` works after the kernel booted; without it, call `ProxyClassWriter::load()` or include the file first.
+  The Symfony bundle registers the proxy autoloader at boot (see [Proxy autoloading](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#proxy-autoloading)), so `unserialize()` works after the kernel booted; without it, call `ProxyClassWriter::load()` or include the file first.
 - When an interface declares a return type naming a parent class of the target, the interface proxy repeats that type and returns the raw target result instead of a proxy, because the proxy is not an instance of that parent.
 - `#[Around]` advice returning a value incompatible with the target's declared return type throws an `AdviceReturnException`.
 - Constructor calls are never advised, and neither are calls made before any instance of the proxy class has received the runtime.

@@ -5,27 +5,16 @@ This page describes how the packages are laid out, which class does what, how to
 
 ## Repository layout
 
-The project is split into three repositories.
+The core is one repository.
 
 ```
 Phauthentic/aop                    phauthentic/aop          Phauthentic\AOP\
 ├── src/
 ├── tests/                         Phauthentic\AOP\Tests\ (Unit/, Fixtures/)
-└── docs/                          the documentation of both packages
-
-Phauthentic/symfony-aop            phauthentic/symfony-aop  Phauthentic\AOP\Symfony\
-├── src/
-└── tests/                         Phauthentic\AOP\Symfony\Tests\ (Integration/, Fixtures/)
-
-Phauthentic/aop-symfony-example         demo application, App\
-├── src/
-├── tests/E2E/                     end-to-end tests against the demo kernel
-└── config/                        demo Symfony config (bundles.php, packages/phauthentic_aop.yaml)
+└── docs/                          the core documentation
 ```
 
 `phauthentic/aop` depends only on PHP 8.3 and `nette/php-generator`.
-`phauthentic/symfony-aop` requires `phauthentic/aop` and adds `symfony/config`, `symfony/dependency-injection`, `symfony/http-kernel` and `symfony/console` at `^7.2`.
-The demo application requires both packages.
 
 ## Core package: `Phauthentic\AOP\`
 
@@ -102,21 +91,10 @@ Both see the same `StaticMatchContext` shape (class, bean name, strategy), so a 
 Because each interceptor holds its own positioned copy, an `#[Around]` may call `proceed()` repeatedly and each call restarts the remainder of the chain from the same point.
 `withBoundArguments()` also clones, so bound values from a `RuntimeGuardInterceptor` are visible only to the interceptor it guards.
 
-## Bundle package: `Phauthentic\AOP\Symfony\`
+## Symfony bundle
 
-| Class | Responsibility |
-|---|---|
-| `PhauthenticAopBundle` | Registers `#[Aspect]` autoconfiguration (tag `phauthentic_aop.aspect`), adds both passes at `TYPE_BEFORE_REMOVING`, registers the proxy autoloader in `boot()`. |
-| `DependencyInjection\Configuration` | The `phauthentic_aop` config tree and defaults. |
-| `DependencyInjection\PhauthenticAopExtension` | Loads `Resources/config/services.php` and sets the four parameters, unless `enabled: false`. |
-| `Compiler\AspectCollectorPass` | Collects aspects, validates, wires registry argument and aspect locator. |
-| `Compiler\ProxyWeavingPass` | Matches, generates, writes, rewires definitions, produces the weaving report. |
-| `Container\AdvisorRegistryFactory` | `create(array $aspectClasses): AdvisorRegistry`, used at compile time and as the runtime service factory. Wraps failures in `AspectDefinitionException` naming aspect and method. |
-| `Container\ContainerAspectInstanceResolver` | `AspectInstanceResolverInterface` over a service locator. |
-| `ProxyAutoloader` | `spl_autoload_register` for `Phauthentic\AOP\Generated\*` across every registered proxy directory; produces the contents of `autoload.php`. |
-| `Command\DebugAopCommand` | Renders the weaving report. |
-
-See [Symfony bundle](symfony.md#how-weaving-works) for the pass algorithm step by step.
+`phauthentic/symfony-aop` (namespace `Phauthentic\AOP\Symfony\`) lives in [Phauthentic/aop-symfony](https://github.com/Phauthentic/aop-symfony).
+Its class responsibilities, repository layout and test setup are described in the [bundle internals](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#bundle-internals).
 
 ## Adding a pointcut designator
 
@@ -166,18 +144,18 @@ composer cs        # report only
 composer cs-fix    # apply
 ```
 
-Each package repository runs its checks with `composer check`: php-cs-fixer, PHPStan at level max, and PHPUnit with a statement coverage gate of 85 percent over `src/`.
+Each repository runs its checks with `composer check`: php-cs-fixer, PHPStan at level max, and PHPUnit with a statement coverage gate of 85 percent over `src/`.
 Coverage needs Xdebug; `composer coverage` runs the tests and the gate on their own.
 
-| Repository | Suite | What it covers |
-|---|---|---|
-| `Phauthentic/aop` | `unit` (`tests/`) | Every core class in isolation: lexer, parser, compiler, each designator, patterns, binder, interceptors, runtime ordering, generators, `ProxyFactory`. Fixtures under `Fixtures/` (aspects, target classes, a class hierarchy for type pattern tests). |
-| `Phauthentic/symfony-aop` | `integration` (`tests/`) | Compiler passes against a real `ContainerBuilder`, configuration, `debug:aop`, and a `TestKernel` that boots from a temporary cache directory, including a separate-process boot through `Fixtures/boot.php` to prove the dumped container loads proxies without rebuilding. |
-| `Phauthentic/aop-symfony-example` | `e2e` (`tests/`) | The demo kernel: exact `app:aop-demo` output, `debug:aop` content, and that proxies land only in `var/cache/test/phauthentic_aop`. |
+| Suite | What it covers |
+|---|---|
+| `unit` (`tests/`) | Every core class in isolation: lexer, parser, compiler, each designator, patterns, binder, interceptors, runtime ordering, generators, `ProxyFactory`. Fixtures under `Fixtures/` (aspects, target classes, a class hierarchy for type pattern tests). |
+
+The bundle repository has its own `integration` suite, and the demo application an `e2e` suite; see the [bundle documentation](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#tests).
 
 Run one test file with `vendor/bin/phpunit tests/Unit/Proxy/ProxyFactoryTest.php`.
 
 PHPStan runs at level max over `src` and `tests`.
 Tests use PHPUnit 12 attributes (`#[Test]`, `#[DataProvider]`).
 
-When changing anything that affects what gets advised, update the expected output in `tests/E2E/AopDemoCommandTest.php` of the demo application and the real-output blocks in [Symfony bundle](symfony.md#debugaop), [Proxies](proxies.md#generated-code) and [Examples](examples.md#running-it).
+When changing anything that affects what gets advised, update the expected output in `tests/E2E/AopDemoCommandTest.php` of the demo application and the real-output blocks in the [bundle documentation](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md#debugaop), [Proxies](proxies.md#generated-code) and [Examples](examples.md#running-it).

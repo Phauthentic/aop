@@ -93,12 +93,7 @@ final class CommonPointcuts
 }
 ```
 
-Configuration, `config/packages/phauthentic_aop.yaml`:
-
-```yaml
-phauthentic_aop:
-    include: ['App\**']
-```
+Installation and configuration of the Symfony bundle are in the [bundle documentation](https://github.com/Phauthentic/aop-symfony/blob/main/docs/symfony.md); `config/packages/phauthentic_aop.yaml` and the `app:aop-demo` and `debug:aop` commands are in the [demo application](https://github.com/Phauthentic/aop-symfony-example).
 
 ## 1. Logging with Before and After
 
