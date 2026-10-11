@@ -91,7 +91,7 @@ For every service definition:
 8. Write `autoload.php` into the proxy directory once per build.
 9. Rewire the definition:
    - Subclass strategy: set the definition's class to the proxy class, set its `file` to `autoload.php`, append a `__aopSetRuntime('@phauthentic_aop.runtime')` method call after any existing calls.
-     A lazy service additionally gets the tag `proxy` with `interface: <target class>`, so Symfony builds a lazy proxy of the target class rather than a lazy ghost of the proxy class.
+     A lazy service becomes a native lazy ghost of the proxy class on PHP 8.4 with Symfony 7.3 or newer; on older stacks it gets the tag `proxy` with `interface: <target class>`, so Symfony builds a lazy proxy of the target class instead.
    - Interface strategy: move the original definition to `<id>.aop_target` (private, untagged), and create a new definition `<id>` with the proxy class, the original's `public`, `shared` and tags, `autoload.php` as file, the target reference as constructor argument, and the `__aopSetRuntime` call.
 10. Add `registerBeanName(<proxy class>, <service id>)` to the runtime definition.
 11. Store the report in the parameter `phauthentic_aop.weaving_report` and pass it to the `debug:aop` command.
@@ -117,18 +117,17 @@ When looking a name up, the runtime walks from the runtime class of the proxy up
 ### Lazy services
 
 A lazy woven service stays lazy.
-`KernelBootTest::lazyServiceStaysLazyAndIsAdvised()` asserts that the container returns a `LazyObjectInterface` instance of the target class, that the constructor has not run, and that the first call constructs the target and is advised.
+What the container hands out depends on the stack.
 
-The outer object is a Symfony lazy proxy of the target class that forwards to the advised instance.
-It is not an `AdvisedInterface`, and it does not implement interfaces added with `#[DeclareParents]`; call `initializeLazyObject()` to get the advised instance.
+**PHP 8.4 with Symfony 7.3 or newer** uses native lazy objects.
+The service is a lazy ghost of the proxy class itself, so it is an `AdvisedInterface`, it implements interfaces added with `#[DeclareParents]`, and `instanceof` the target class holds.
+Native lazy objects initialize on property access, which an advised method does not do before it looks up its runtime.
+The generated `__aopRuntime()` accessor therefore initializes an uninitialized lazy object before the first advised call, which runs the constructor and the `__aopSetRuntime` call, so the first call is advised as well.
 
-A lazy ghost of the proxy class, which would make the outer object the advised one, was evaluated and rejected for two reasons:
-
-- A Symfony lazy ghost initializes on the first property access only.
-  Advised methods read the runtime from a per-class static, not from instance state, so on a ghost they run before initialization without advice (the runtime is set by the initializer), and the constructor of a class without properties never runs.
-- The ghost class file extends the proxy class and is required by `Container::createProxy()` before the service includes `autoload.php`.
-  In a fresh process where a bundle booting before `PhauthenticAopBundle` fetches the service, this fails with `Class "Phauthentic\AOP\Generated\…Proxy_…" not found`.
-  Loading the proxy from its file at build time instead of evaluating it makes the debug dumper prepend `include_once $container->targetDir.''.'/phauthentic_aop/….php';` to the ghost class file, where `$container` is undefined (Symfony 7.2), giving `Undefined variable $container`.
+**Older stacks** (PHP 8.3, or Symfony 7.2) cannot use native lazy objects.
+There the definition gets the tag `proxy` with `interface: <target class>`, and Symfony builds a lazy proxy of the target class that forwards to the advised instance.
+That outer object is not an `AdvisedInterface` and does not implement introduced interfaces; call `initializeLazyObject()` to reach the advised instance.
+A generated lazy ghost of the proxy class is not an option on these stacks: the ghost class file is required by `Container::createProxy()` before the service includes `autoload.php`, and the debug dumper inlines `include_once $container->targetDir…` into the ghost file, where `$container` is undefined.
 
 ### Proxy autoloading
 

@@ -47,6 +47,7 @@ use Phauthentic\AOP\Tests\Fixtures\Targets\SelfCallingInterface;
 use Phauthentic\AOP\Tests\Fixtures\Targets\ShoutInterface;
 use Phauthentic\AOP\Tests\Fixtures\Targets\SignatureShapes;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -582,5 +583,31 @@ final class ProxyFactoryTest extends TestCase
         self::assertInstanceOf(Tracked::class, $proxy);
         self::assertSame('tracked', $proxy->track());
         self::assertSame(['this(Trackable) track'], Log::$entries);
+    }
+
+    #[Test]
+    #[RequiresPhp('>= 8.4.0')]
+    public function aNativeLazyGhostOfAProxyClassIsInitializedAndAdvisedOnTheFirstCall(): void
+    {
+        $factory = $this->factory();
+        $proxyClass = $factory->createProxyClass(CountingConstructor::class);
+        $reflection = new \ReflectionClass($proxyClass);
+        $before = CountingConstructor::$constructed;
+
+        $ghost = $reflection->newLazyGhost(static function (object $instance) use ($factory): void {
+            \assert($instance instanceof CountingConstructor && $instance instanceof AdvisedInterface);
+            $instance->__construct('lazy-');
+            $instance->__aopSetRuntime($factory->runtime());
+        });
+        \assert($ghost instanceof CountingConstructor);
+
+        self::assertTrue($reflection->isUninitializedLazyObject($ghost));
+        self::assertSame($before, CountingConstructor::$constructed);
+
+        self::assertSame('lazy-x1', $ghost->work('x'));
+
+        self::assertFalse($reflection->isUninitializedLazyObject($ghost));
+        self::assertSame($before + 1, CountingConstructor::$constructed);
+        self::assertSame(['around>work', 'work', 'around<'], Log::$entries);
     }
 }

@@ -13,3 +13,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Introductions through `#[DeclareParents]`.
 - Per-instance aspects through `#[Aspect(scope: ...)]` (`perthis`, `pertarget`).
 - `ProxyFactory` for using the library without a framework.
+- Proxies initialize native lazy objects (PHP 8.4) before the first advised call, so lazy ghosts of a proxy class are advised from the start.

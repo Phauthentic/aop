@@ -52,7 +52,8 @@ final class ProxyCodeBuilder
         // the class-level fallback serves instances never wired themselves (`new static` inside the target, instances
         // built before wiring, clones, unserialized copies). A WeakMap in a static local instead of a property keeps
         // the runtime out of serialize(), var_dump() and readonly constraints; PHP rejects static properties on
-        // readonly classes.
+        // readonly classes. A native lazy object (PHP 8.4) that has not been wired yet is initialized first: its
+        // initializer constructs the target and calls __aopSetRuntime(), so the first call is advised as well.
         $class->addMethod('__aopRuntime')
             ->setPrivate()
             ->setStatic()
@@ -63,6 +64,12 @@ final class ProxyCodeBuilder
                 static $instances = new \WeakMap();
                 if (null !== $runtime) {
                     $current = $instances[$instance] = $runtime;
+                }
+                if (!isset($instances[$instance]) && \PHP_VERSION_ID >= 80400) {
+                    $reflection = new \ReflectionClass($instance);
+                    if ($reflection->isUninitializedLazyObject($instance)) {
+                        $reflection->initializeLazyObject($instance);
+                    }
                 }
 
                 return $instances[$instance] ?? $current;
