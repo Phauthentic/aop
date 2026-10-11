@@ -69,6 +69,7 @@ execution([public|protected] [?]ReturnType[+] [DeclaringType[+]::]name(params))
 - The modifier is optional; without it any visibility matches (but see [what is never advised](#never-advised)).
 - `*` as return type matches any return type, including none.
   Any other return pattern is compared against the declared return type; `?` must be present to match a nullable declared type.
+  `self` and `parent` match both the keyword and the class it resolves to, because PHP 8.5 reflection reports the resolved class name where earlier versions report the keyword.
 - The declaring type is optional.
   It matches when the target class, one of its parents, or one of its interfaces matches the pattern **and** that type declares the method.
   So `execution(* App\Service\OrderServiceInterface::placeOrder(..))` matches `OrderService::placeOrder()` because the interface declares it.

@@ -34,6 +34,55 @@ phauthentic_aop:
 Aspects need `autoconfigure: true` (the default in a Symfony skeleton) so the `#[Aspect]` attribute tags them.
 A `#[Aspect]` class registered without autoconfiguration is ignored unless you tag it `phauthentic_aop.aspect` yourself.
 
+## Compatibility
+
+The bundle requires PHP 8.3 or newer and Symfony 7.2 to 8.0 (`symfony/*: ^7.2 || ^8.0`).
+Symfony 8 itself requires PHP 8.4.
+
+| PHP | Symfony 7.2 | Symfony 7.3 and 7.4 | Symfony 8.0 |
+|---|---|---|---|
+| 8.3 | generated lazy proxies | generated lazy proxies | not possible |
+| 8.4 | generated lazy proxies | native lazy objects | native lazy objects |
+| 8.5 | generated lazy proxies | native lazy objects | native lazy objects |
+
+CI runs PHP 8.3, 8.4 and 8.5 against Symfony 7.4 and 8.0.
+
+Everything behaves the same on all stacks except `lazy: true` services woven with the subclass strategy, which follow the two columns above.
+
+### Native lazy objects (Symfony 7.3+ on PHP 8.4+)
+
+Symfony builds lazy services with `ReflectionClass::newLazyGhost()` and rejects the `proxy` tag it accepted before, so the bundle cannot keep using generated lazy proxies there.
+A lazy woven service is a native lazy ghost of the proxy class itself.
+The object the container hands out is the advised object: it is an `AdvisedInterface`, it implements interfaces added with `#[DeclareParents]`, and `instanceof` the target class holds.
+
+Two properties of native lazy objects shape the implementation, and both are handled by the generated proxies, so nothing changes for application code:
+
+- A native lazy object initializes only when one of its properties is accessed.
+  An advised method does not touch a property before it resolves its runtime, so the proxy initializes an uninitialized lazy object itself before the first advised call, which runs the constructor and the runtime wiring first.
+- A class without any property counts as initialized from the start and never runs its initializer.
+  Every proxy therefore declares one never-assigned private property, so lazy ghosts of proxies of property-less classes stay lazy.
+
+A native lazy proxy of the *target* class, with the advised instance as its real object, was evaluated and rejected: a method that does not access a property runs on the uninitialized stand-in and bypasses the advice silently.
+
+The dumped container creates the ghost through `new \ReflectionClass(<proxy class>)` before the service includes the proxy autoload file.
+The weaving pass therefore writes the pointer file `phauthentic_aop.proxy_dir` next to the dumped container, and `ProxyAutoloader`, registered in the bundle constructor, finds proxy directories through it on the first miss.
+A bundle that fetches a lazy woven service in its own `boot()` before `PhauthenticAopBundle` boots works because of this.
+
+### Generated lazy proxies (PHP 8.3, or Symfony 7.2)
+
+The definition gets the tag `proxy` with `interface: <target class>`, and Symfony builds a lazy proxy of the target class that forwards to the advised instance.
+That outer object is not an `AdvisedInterface` and does not implement introduced interfaces; call `initializeLazyObject()` to reach the advised instance.
+
+### PHP 8.5
+
+PHP 8.5 reflection reports the resolved class name instead of the keyword for a `self` return type.
+Type patterns match `self` and `parent` both as the keyword and as the class they resolve to, so pointcuts behave the same on every PHP version (see the [pointcut reference](pointcuts.md#execution)).
+
+### Static analysis
+
+Both repositories run PHPStan with `phpVersion: 80400`, because the native lazy object API used behind runtime checks does not exist in the PHP 8.3 stubs.
+Keep that setting when adding PHP 8.4 only calls behind a `PHP_VERSION_ID` guard.
+
 ## Configuration reference
 
 ```yaml
@@ -117,7 +166,7 @@ When looking a name up, the runtime walks from the runtime class of the proxy up
 ### Lazy services
 
 A lazy woven service stays lazy.
-What the container hands out depends on the stack.
+What the container hands out depends on the stack; the [compatibility section](#compatibility) has the overview.
 
 **PHP 8.4 with Symfony 7.3 or newer** uses native lazy objects.
 The service is a lazy ghost of the proxy class itself, so it is an `AdvisedInterface`, it implements interfaces added with `#[DeclareParents]`, and `instanceof` the target class holds.
