@@ -2,7 +2,7 @@
 
 `phauthentic/symfony-aop` (namespace `Phauthentic\AOP\Symfony\`, repository [Phauthentic/symfony-aop](https://github.com/Phauthentic/symfony-aop)) discovers aspects, weaves proxies at container build time and ships `debug:aop`.
 It requires Symfony 7.2 components (`config`, `dependency-injection`, `http-kernel`, `console`) and PHP 8.3.
-A complete runnable demo application lives in the demo application repository: https://github.com/floriankraemer/symfony-aop.
+A complete runnable demo application lives in the demo application repository: https://github.com/Phauthentic/aop-symfony-example.
 
 ## Installation
 

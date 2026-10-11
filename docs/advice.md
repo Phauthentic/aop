@@ -208,7 +208,7 @@ A.after
 A.around<
 ```
 
-The same order applies in the [demo application](https://github.com/floriankraemer/symfony-aop), where `LoggingAspect` is `#[Order(1)]`, `ValidationAspect` `#[Order(2)]`, `RetryAspect` `#[Order(3)]` and `CachingAspect` `#[Order(10)]`.
+The same order applies in the [demo application](https://github.com/Phauthentic/aop-symfony-example), where `LoggingAspect` is `#[Order(1)]`, `ValidationAspect` `#[Order(2)]`, `RetryAspect` `#[Order(3)]` and `CachingAspect` `#[Order(10)]`.
 See [Examples](examples.md) for the resulting trace.
 
 ## Aspect instances

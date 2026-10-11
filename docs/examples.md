@@ -1,6 +1,6 @@
 # Examples
 
-The complete runnable demo lives in the demo application repository: https://github.com/floriankraemer/symfony-aop.
+The complete runnable demo lives in the demo application repository: https://github.com/Phauthentic/aop-symfony-example.
 Every example on this page is in the demo application under `src/` and runs with `bin/console app:aop-demo`.
 The examples share two things: a `Trace` collector so the output shows what ran, and the `StringService` / `OrderService` targets.
 

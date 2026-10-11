@@ -2,7 +2,7 @@
 
 Developer documentation for `phauthentic/aop` (the framework-free core, namespace `Phauthentic\AOP\`, this repository) and `phauthentic/symfony-aop` (the Symfony integration, namespace `Phauthentic\AOP\Symfony\`, repository [Phauthentic/symfony-aop](https://github.com/Phauthentic/symfony-aop)).
 The documentation for both packages lives here.
-A complete runnable demo application lives in [floriankraemer/symfony-aop](https://github.com/floriankraemer/symfony-aop).
+A complete runnable demo application lives in [floriankraemer/symfony-aop](https://github.com/Phauthentic/aop-symfony-example).
 
 ## Reading order
 

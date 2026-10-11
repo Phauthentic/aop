@@ -114,7 +114,7 @@ PHP forbids static properties on readonly classes, and an instance property woul
 
 ### Subclass proxy
 
-Real output for `App\Service\StringService` from the demo application (https://github.com/floriankraemer/symfony-aop), file `var/cache/dev/phauthentic_aop/Phauthentic/AOP/Generated/App/Service/StringServiceProxy_74b8f9b604df.php`, trimmed to two methods, without the introduced `Auditable` interface and its members (see [Introductions](introductions.md)):
+Real output for `App\Service\StringService` from the demo application (https://github.com/Phauthentic/aop-symfony-example), file `var/cache/dev/phauthentic_aop/Phauthentic/AOP/Generated/App/Service/StringServiceProxy_74b8f9b604df.php`, trimmed to two methods, without the introduced `Auditable` interface and its members (see [Introductions](introductions.md)):
 
 ```php
 <?php

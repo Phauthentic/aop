@@ -32,7 +32,7 @@ Rename the method, implement the interface in the target, or narrow the type pat
 
 ## Example
 
-The demo application (https://github.com/floriankraemer/symfony-aop) makes every service auditable.
+The demo application (https://github.com/Phauthentic/aop-symfony-example) makes every service auditable.
 The interface and its default implementation live in `src/Contract/` in the demo application:
 
 ```php
