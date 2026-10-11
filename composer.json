@@ -1,0 +1,50 @@
+{
+    "name": "phauthentic/aop",
+    "description": "Aspect-oriented programming for PHP 8.3+: pointcut expressions, advice, introductions and generated proxies, modelled on Spring AOP.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Florian Krämer"
+        }
+    ],
+    "require": {
+        "php": ">=8.3",
+        "nette/php-generator": "^4.2"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.3",
+        "phpunit/phpunit": "^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Phauthentic\\AOP\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Phauthentic\\AOP\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse --memory-limit=1G",
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs-fix": "php-cs-fixer fix",
+        "coverage": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover=var/coverage/clover.xml",
+            "php tools/coverage-check.php var/coverage/clover.xml 85"
+        ],
+        "check": [
+            "@cs",
+            "@stan",
+            "@coverage"
+        ]
+    }
+}
