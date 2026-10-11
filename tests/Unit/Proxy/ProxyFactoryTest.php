@@ -46,6 +46,7 @@ use Phauthentic\AOP\Tests\Fixtures\Targets\SelfCallingFinal;
 use Phauthentic\AOP\Tests\Fixtures\Targets\SelfCallingInterface;
 use Phauthentic\AOP\Tests\Fixtures\Targets\ShoutInterface;
 use Phauthentic\AOP\Tests\Fixtures\Targets\SignatureShapes;
+use Phauthentic\AOP\Tests\Fixtures\Targets\Stateless;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\Attributes\Test;
@@ -609,5 +610,27 @@ final class ProxyFactoryTest extends TestCase
         self::assertFalse($reflection->isUninitializedLazyObject($ghost));
         self::assertSame($before + 1, CountingConstructor::$constructed);
         self::assertSame(['around>work', 'work', 'around<'], Log::$entries);
+    }
+
+    #[Test]
+    #[RequiresPhp('>= 8.4.0')]
+    public function aNativeLazyGhostOfAPropertyLessTargetStaysLazyUntilTheFirstCall(): void
+    {
+        $factory = $this->factory();
+        $reflection = new \ReflectionClass($factory->createProxyClass(Stateless::class));
+
+        $ghost = $reflection->newLazyGhost(static function (object $instance) use ($factory): void {
+            \assert($instance instanceof Stateless && $instance instanceof AdvisedInterface);
+            $instance->__construct();
+            $instance->__aopSetRuntime($factory->runtime());
+        });
+        \assert($ghost instanceof Stateless);
+
+        self::assertTrue($reflection->isUninitializedLazyObject($ghost));
+        self::assertSame([], Log::$entries);
+
+        self::assertSame('X', $ghost->work('x'));
+
+        self::assertSame(['stateless constructed', 'around>work', 'work', 'around<'], Log::$entries);
     }
 }

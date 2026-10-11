@@ -48,6 +48,9 @@ final class ProxyCodeBuilder
         $class = $file->addNamespace(substr($className, 0, $position))->addClass(substr($className, $position + 1));
         $class->setReadOnly($target->isReadOnly());
         $class->addImplement(AdvisedInterface::class);
+        // Never assigned: a native lazy object (PHP 8.4) of a class without properties counts as initialized at once
+        // and never runs its initializer, so this keeps lazy ghosts of proxies of property-less classes lazy.
+        $class->addProperty('__aopLazy')->setPrivate()->setType('bool');
         // Per instance, so proxies of the same class wired by different factories or kernels keep their own runtime;
         // the class-level fallback serves instances never wired themselves (`new static` inside the target, instances
         // built before wiring, clones, unserialized copies). A WeakMap in a static local instead of a property keeps
