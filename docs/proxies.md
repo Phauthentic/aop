@@ -108,6 +108,8 @@ These are instances created with `new static` inside the target, instances built
 Until then the proxy behaves exactly like the target: when both are missing, every advised method calls through directly.
 
 Both live in `static` local variables of the private static method `__aopRuntime()`: the per-instance runtimes in a `WeakMap` keyed by the proxy, the fallback in a plain variable.
+When the instance has no runtime yet and is an uninitialized native lazy object (PHP 8.4), `__aopRuntime()` initializes it first, so the constructor and the `__aopSetRuntime()` call run before the advice chain.
+The never-assigned property `$__aopLazy` exists only for native lazy objects: a class without any property counts as initialized at once and would never run its initializer.
 PHP forbids static properties on readonly classes, and an instance property would put the runtime, with its closures and container references, into `serialize()` output.
 
 ### Subclass proxy
@@ -123,6 +125,8 @@ namespace Phauthentic\AOP\Generated\App\Service;
 
 class StringServiceProxy_74b8f9b604df extends \App\Service\StringService implements \Phauthentic\AOP\Proxy\AdvisedInterface
 {
+    private bool $__aopLazy;
+
     private static function __aopRuntime(
         object $instance,
         ?\Phauthentic\AOP\Runtime\AopRuntime $runtime = null,
@@ -184,6 +188,8 @@ namespace Phauthentic\AOP\Generated\App\Service;
 
 class OrderServiceProxy_264909e5f062 implements \Phauthentic\AOP\Proxy\AdvisedInterface, \App\Service\OrderServiceInterface
 {
+    private bool $__aopLazy;
+
     private static function __aopRuntime(
         object $instance,
         ?\Phauthentic\AOP\Runtime\AopRuntime $runtime = null,

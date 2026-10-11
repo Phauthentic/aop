@@ -123,6 +123,9 @@ What the container hands out depends on the stack.
 The service is a lazy ghost of the proxy class itself, so it is an `AdvisedInterface`, it implements interfaces added with `#[DeclareParents]`, and `instanceof` the target class holds.
 Native lazy objects initialize on property access, which an advised method does not do before it looks up its runtime.
 The generated `__aopRuntime()` accessor therefore initializes an uninitialized lazy object before the first advised call, which runs the constructor and the `__aopSetRuntime` call, so the first call is advised as well.
+The dumped container creates the ghost through `new \ReflectionClass(<proxy class>)` before the service includes `autoload.php`, so the proxy class must be autoloadable at that point.
+For that the weaving pass writes the pointer file `phauthentic_aop.proxy_dir` into `kernel.build_dir`, next to the dumped container, and `ProxyAutoloader` (registered in the bundle constructor) reads it on the first miss by looking beside every included `*Container.php` file.
+This also covers a bundle whose `boot()` fetches a lazy woven service before `PhauthenticAopBundle` boots.
 
 **Older stacks** (PHP 8.3, or Symfony 7.2) cannot use native lazy objects.
 There the definition gets the tag `proxy` with `interface: <target class>`, and Symfony builds a lazy proxy of the target class that forwards to the advised instance.
