@@ -49,7 +49,7 @@ final class ParameterPattern
                 }
                 break; // covered by the trailing ellipsis
             }
-            if (!$this->params[$i]->matchesDeclared($parameter->getType())) {
+            if (!$this->params[$i]->matchesDeclared($parameter->getType(), $parameter->getDeclaringClass())) {
                 return false;
             }
         }

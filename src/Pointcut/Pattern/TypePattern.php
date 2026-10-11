@@ -78,15 +78,36 @@ final class TypePattern
      * Matches a declared parameter/return type. Untyped, union and intersection types never match.
      * A nullable declared type (`?T`) matches only a nullable pattern (`?T`), never the plain `T`.
      */
-    public function matchesDeclared(?\ReflectionType $type): bool
+    /**
+     * `self` and `parent` are matched both as written and as the class they resolve to in `$declaring`, since PHP
+     * versions differ in whether reflection reports the keyword or the resolved class name.
+     *
+     * @param \ReflectionClass<object>|null $declaring the class declaring the method or parameter
+     */
+    public function matchesDeclared(?\ReflectionType $type, ?\ReflectionClass $declaring = null): bool
     {
         if (!$type instanceof \ReflectionNamedType) {
             return false;
         }
         $name = $type->getName();
         $nullable = $type->allowsNull() && !in_array($name, ['mixed', 'null'], true);
+        if ($nullable !== $this->nullable) {
+            return false;
+        }
+        if ($this->matchesName($name)) {
+            return true;
+        }
+        if (null === $declaring) {
+            return false;
+        }
+        $aliases = ['self' => $declaring->getName(), 'parent' => $declaring->getParentClass() ? $declaring->getParentClass()->getName() : null];
+        foreach ($aliases as $keyword => $resolved) {
+            if (null !== $resolved && ($name === $keyword || $name === $resolved) && ($this->matchesName($keyword) || $this->matchesName($resolved))) {
+                return true;
+            }
+        }
 
-        return $nullable === $this->nullable && $this->matchesName($name);
+        return false;
     }
 
     private static function compile(string $pattern): string

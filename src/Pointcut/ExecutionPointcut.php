@@ -44,7 +44,7 @@ final class ExecutionPointcut implements PointcutInterface
         return $this->modifier->matches($method)
             && $this->name->matches($method->getName())
             && $this->params->matches($method)
-            && (null === $this->returnType || $this->returnType->matchesDeclared($method->getReturnType()))
+            && (null === $this->returnType || $this->returnType->matchesDeclared($method->getReturnType(), $method->getDeclaringClass()))
             && $this->declaringTypeMatches($method->getName(), $ctx);
     }
 

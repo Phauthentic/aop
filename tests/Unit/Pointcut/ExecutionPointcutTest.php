@@ -94,6 +94,8 @@ final class ExecutionPointcutTest extends TestCase
         yield '? pattern on non-nullable' => [new TypePattern('string', true), 'noParams', false];
         yield 'static literal' => [new TypePattern('static'), 'selfReturn', true];
         yield 'self literal' => [new TypePattern('self'), 'repo', true];
+        yield 'self resolved to the declaring class' => [new TypePattern(UserRepository::class), 'repo', true];
+        yield 'self does not resolve to another class' => [new TypePattern(RepositoryInterface::class), 'repo', false];
         yield 'self vs static' => [new TypePattern('self'), 'selfReturn', false];
         yield 'untyped return never matches a pattern' => [new TypePattern('mixed'), 'untypedReturn', false];
         yield 'star glob' => [new TypePattern('*'), 'noParams', true];
