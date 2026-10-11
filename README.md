@@ -7,7 +7,7 @@ This repository is `phauthentic/aop`, the framework-free core: pointcut language
 It also holds the documentation for both packages.
 
 - [Phauthentic/symfony-aop](https://github.com/Phauthentic/symfony-aop) is the Symfony bundle: aspect discovery, compile-time weaving, `debug:aop`.
-- [floriankraemer/symfony-aop](https://github.com/Phauthentic/aop-symfony-example) is a runnable demo application.
+- [Phauthentic/aop-symfony-example](https://github.com/Phauthentic/aop-symfony-example) is a runnable demo application.
 
 ## Install
 

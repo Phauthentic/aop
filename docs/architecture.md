@@ -17,7 +17,7 @@ Phauthentic/symfony-aop            phauthentic/symfony-aop  Phauthentic\AOP\Symf
 ├── src/
 └── tests/                         Phauthentic\AOP\Symfony\Tests\ (Integration/, Fixtures/)
 
-floriankraemer/symfony-aop         demo application, App\
+Phauthentic/aop-symfony-example         demo application, App\
 ├── src/
 ├── tests/E2E/                     end-to-end tests against the demo kernel
 └── config/                        demo Symfony config (bundles.php, packages/phauthentic_aop.yaml)
@@ -173,7 +173,7 @@ Coverage needs Xdebug; `composer coverage` runs the tests and the gate on their 
 |---|---|---|
 | `Phauthentic/aop` | `unit` (`tests/`) | Every core class in isolation: lexer, parser, compiler, each designator, patterns, binder, interceptors, runtime ordering, generators, `ProxyFactory`. Fixtures under `Fixtures/` (aspects, target classes, a class hierarchy for type pattern tests). |
 | `Phauthentic/symfony-aop` | `integration` (`tests/`) | Compiler passes against a real `ContainerBuilder`, configuration, `debug:aop`, and a `TestKernel` that boots from a temporary cache directory, including a separate-process boot through `Fixtures/boot.php` to prove the dumped container loads proxies without rebuilding. |
-| `floriankraemer/symfony-aop` | `e2e` (`tests/`) | The demo kernel: exact `app:aop-demo` output, `debug:aop` content, and that proxies land only in `var/cache/test/phauthentic_aop`. |
+| `Phauthentic/aop-symfony-example` | `e2e` (`tests/`) | The demo kernel: exact `app:aop-demo` output, `debug:aop` content, and that proxies land only in `var/cache/test/phauthentic_aop`. |
 
 Run one test file with `vendor/bin/phpunit tests/Unit/Proxy/ProxyFactoryTest.php`.
 
