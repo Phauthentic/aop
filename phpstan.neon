@@ -1,5 +1,8 @@
 parameters:
     level: max
+    # The native lazy object API (ReflectionClass::newLazyGhost() and friends) is PHP 8.4; tests use it behind
+    # #[RequiresPhp], and the generated proxies only call it behind a PHP_VERSION_ID guard.
+    phpVersion: 80400
     paths:
         - src
         - tests

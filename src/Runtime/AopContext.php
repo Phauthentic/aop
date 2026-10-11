@@ -24,7 +24,7 @@ final class AopContext
      */
     public static function currentProxy(): ?object
     {
-        return self::$proxies[array_key_last(self::$proxies)] ?? null;
+        return self::$proxies[\count(self::$proxies) - 1] ?? null;
     }
 
     /**
